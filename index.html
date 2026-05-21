@@ -14,10 +14,7 @@ body {
   text-align:center;
 }
 
-header {
-  padding:20px;
-}
-
+header { padding:20px; }
 h1 { font-size:36px; margin:10px 0; }
 
 .products {
@@ -33,10 +30,7 @@ h1 { font-size:36px; margin:10px 0; }
   padding:15px;
   border-radius:15px;
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
-  transition:0.2s;
 }
-
-.card:hover { transform:scale(1.05); }
 
 button {
   background:#2f6f2f;
@@ -52,38 +46,17 @@ button {
   background:white;
   padding:15px;
   border-radius:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-
-input {
-  margin:5px;
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #ccc;
-}
-
-.file-box {
-  margin-top:10px;
 }
 </style>
 </head>
 <body>
 
 <header>
-
-  <!-- ✅ LOGO -->
   <svg width="90" height="90">
     <circle cx="45" cy="45" r="40" fill="#8B5E3C" />
     <path d="M25 55 Q45 15 65 55" stroke="#2f6f2f" stroke-width="5" fill="none" />
   </svg>
-
   <h1>kudychodíš</h1>
-
-  <!-- ✅ výběr CSV -->
-  <div class="file-box">
-    <input type="file" id="fileInput" accept=".csv">
-  </div>
-
 </header>
 
 <h2>Produkty</h2>
@@ -108,17 +81,13 @@ input {
 let products = [];
 let cart = {};
 
-// načtení CSV ručně
-const input = document.getElementById("fileInput");
+// ✅ AUTOMATICKÉ NAČTENÍ CSV (bez ručního výběru)
+async function loadCSV(){
+  try {
+    // anti-cache
+    const res = await fetch("produkty.csv?t=" + Date.now());
+    const text = await res.text();
 
-input.addEventListener("change", function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function(event) {
-    const text = event.target.result;
     products = [];
 
     const rows = text.trim().split("\n").slice(1);
@@ -127,14 +96,19 @@ input.addEventListener("change", function(e) {
       let clean = r.replace("\r", "");
       let [nazev, cena] = clean.split(";");
 
-      products.push({ id: nazev, nazev: nazev, cena: parseInt(cena) });
+      products.push({
+        id: nazev.trim(),
+        nazev: nazev.trim(),
+        cena: parseInt(cena)
+      });
     });
 
     renderProducts();
-  };
 
-  reader.readAsText(file);
-});
+  } catch(e){
+    document.getElementById("products").innerHTML = "<p>❌ CSV se nenačetlo (použij Live Server)</p>";
+  }
+}
 
 function renderProducts(){
   const container = document.getElementById("products");
@@ -143,11 +117,11 @@ function renderProducts(){
   products.forEach(p => {
     let div = document.createElement("div");
     div.className = "card";
-
-    div.innerHTML = `<h3>${p.nazev}</h3>
-                     <p>${p.cena} Kč</p>
-                     <button onclick="add('${p.id}')">Přidat</button>`;
-
+    div.innerHTML = `
+      <h3>${p.nazev}</h3>
+      <p>${p.cena} Kč</p>
+      <button onclick="add('${p.id}')">Přidat</button>
+    `;
     container.appendChild(div);
   });
 }
@@ -167,8 +141,8 @@ function update(){
     price += qty * p.cena;
   });
 
-  document.getElementById("count").innerText = count;
-  document.getElementById("price").innerText = price;
+  count.textContent = count;
+  price.textContent = price;
 }
 
 function sendOrder(){
@@ -178,13 +152,16 @@ function sendOrder(){
     if(cart[p.id]) text += p.nazev + ": " + cart[p.id] + " ks\n";
   });
 
-  text += "\nCelkem kusů: " + count.innerText;
-  text += "\nCena: " + price.innerText + " Kč";
+  text += "\nCelkem kusů: " + document.getElementById("count").innerText;
+  text += "\nCena: " + document.getElementById("price").innerText + " Kč";
 
   text += "\n\nZákazník: " + name.value + " " + surname.value;
 
   location.href = "mailto:app@kostka-skola.cz?body=" + encodeURIComponent(text);
 }
+
+// ✅ SPUSTÍ SE AUTOMATICKY
+loadCSV();
 </script>
 
 </body>
