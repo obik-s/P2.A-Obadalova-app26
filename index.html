@@ -15,6 +15,7 @@ body {
 }
 
 header { padding:20px; }
+
 h1 { font-size:36px; margin:10px 0; }
 
 .products {
@@ -30,7 +31,10 @@ h1 { font-size:36px; margin:10px 0; }
   padding:15px;
   border-radius:15px;
   box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  transition:0.2s;
 }
+
+.card:hover { transform:scale(1.05); }
 
 button {
   background:#2f6f2f;
@@ -38,6 +42,7 @@ button {
   padding:8px 12px;
   border:none;
   border-radius:8px;
+  cursor:pointer;
 }
 
 .section {
@@ -46,16 +51,26 @@ button {
   background:white;
   padding:15px;
   border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+input {
+  margin:5px;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
 }
 </style>
 </head>
 <body>
 
 <header>
+  <!-- ✅ LOGO -->
   <svg width="90" height="90">
     <circle cx="45" cy="45" r="40" fill="#8B5E3C" />
     <path d="M25 55 Q45 15 65 55" stroke="#2f6f2f" stroke-width="5" fill="none" />
   </svg>
+
   <h1>kudychodíš</h1>
 </header>
 
@@ -63,28 +78,28 @@ button {
 <div id="products" class="products"></div>
 
 <div class="section">
-<h2>Objednávka</h2>
-<p>Kusů: <span id="count">0</span></p>
-<p>Cena: <span id="price">0</span> Kč</p>
+  <h2>Objednávka</h2>
+  <p>Kusů: <span id="count">0</span></p>
+  <p>Cena: <span id="price">0</span> Kč</p>
 </div>
 
 <div class="section">
-<h2>Zákazník</h2>
-<input id="name" placeholder="Jméno"><br>
-<input id="surname" placeholder="Příjmení"><br>
-<input id="email" placeholder="Email"><br>
-<input id="phone" placeholder="Telefon"><br><br>
-<button onclick="sendOrder()">Odeslat objednávku</button>
+  <h2>Zákazník</h2>
+  <input id="name" placeholder="Jméno"><br>
+  <input id="surname" placeholder="Příjmení"><br>
+  <input id="email" placeholder="Email"><br>
+  <input id="phone" placeholder="Telefon"><br><br>
+
+  <button onclick="sendOrder()">Odeslat objednávku</button>
 </div>
 
 <script>
 let products = [];
 let cart = {};
 
-// ✅ AUTOMATICKÉ NAČTENÍ CSV (bez ručního výběru)
+// ✅ automatické načtení CSV
 async function loadCSV(){
   try {
-    // anti-cache
     const res = await fetch("produkty.csv?t=" + Date.now());
     const text = await res.text();
 
@@ -106,10 +121,12 @@ async function loadCSV(){
     renderProducts();
 
   } catch(e){
-    document.getElementById("products").innerHTML = "<p>❌ CSV se nenačetlo (použij Live Server)</p>";
+    document.getElementById("products").innerHTML =
+      "<p style='color:red'>❌ CSV se nenačetlo (použij Live Server)</p>";
   }
 }
 
+// ✅ vykreslení produktů
 function renderProducts(){
   const container = document.getElementById("products");
   container.innerHTML = "";
@@ -117,20 +134,24 @@ function renderProducts(){
   products.forEach(p => {
     let div = document.createElement("div");
     div.className = "card";
+
     div.innerHTML = `
       <h3>${p.nazev}</h3>
       <p>${p.cena} Kč</p>
       <button onclick="add('${p.id}')">Přidat</button>
     `;
+
     container.appendChild(div);
   });
 }
 
+// ✅ přidání do košíku
 function add(id){
   cart[id] = (cart[id] || 0) + 1;
   update();
 }
 
+// ✅ přepočet
 function update(){
   let count = 0;
   let price = 0;
@@ -141,26 +162,33 @@ function update(){
     price += qty * p.cena;
   });
 
-  count.textContent = count;
-  price.textContent = price;
+  document.getElementById("count").innerText = count;
+  document.getElementById("price").innerText = price;
 }
 
+// ✅ odeslání objednávky
 function sendOrder(){
   let text = "Objednávka:\n";
 
   products.forEach(p => {
-    if(cart[p.id]) text += p.nazev + ": " + cart[p.id] + " ks\n";
+    if(cart[p.id]) {
+      text += `${p.nazev}: ${cart[p.id]} ks\n`;
+    }
   });
 
-  text += "\nCelkem kusů: " + document.getElementById("count").innerText;
-  text += "\nCena: " + document.getElementById("price").innerText + " Kč";
+  text += `\nCelkem kusů: ${count.innerText}`;
+  text += `\nCena: ${price.innerText} Kč`;
 
-  text += "\n\nZákazník: " + name.value + " " + surname.value;
+  text += `\n\nZákazník: ${name.value} ${surname.value}`;
+  text += `\nEmail: ${email.value}`;
+  text += `\nTelefon: ${phone.value}`;
 
-  location.href = "mailto:app@kostka-skola.cz?body=" + encodeURIComponent(text);
+  location.href =
+    "mailto:app@kostka-skola.cz?subject=Objednavka&body=" +
+    encodeURIComponent(text);
 }
 
-// ✅ SPUSTÍ SE AUTOMATICKY
+// ✅ spustí se automaticky
 loadCSV();
 </script>
 
