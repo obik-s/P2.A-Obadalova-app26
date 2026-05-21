@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kudychodíš</title>
+
+<style>
+body {
+  margin:0;
+  font-family: "Segoe UI", Arial;
+  background: linear-gradient(135deg, #e6f0dc, #c8d5b9);
+  color:#2f4f2f;
+  text-align:center;
+}
+
+header {
+  padding:20px;
+}
+
+h1 { font-size:36px; margin:10px 0; }
+
+.products {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap:15px;
+  max-width:900px;
+  margin:20px auto;
+}
+
+.card {
+  background:white;
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  transition:0.2s;
+}
+
+.card:hover { transform:scale(1.05); }
+
+button {
+  background:#2f6f2f;
+  color:white;
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+}
+
+.section {
+  max-width:600px;
+  margin:20px auto;
+  background:white;
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+input {
+  margin:5px;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+.file-box {
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<header>
+
+  <!-- ✅ LOGO -->
+  <svg width="90" height="90">
+    <circle cx="45" cy="45" r="40" fill="#8B5E3C" />
+    <path d="M25 55 Q45 15 65 55" stroke="#2f6f2f" stroke-width="5" fill="none" />
+  </svg>
+
+  <h1>kudychodíš</h1>
+
+  <!-- ✅ výběr CSV -->
+  <div class="file-box">
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+
+</header>
+
+<h2>Produkty</h2>
+<div id="products" class="products"></div>
+
+<div class="section">
+<h2>Objednávka</h2>
+<p>Kusů: <span id="count">0</span></p>
+<p>Cena: <span id="price">0</span> Kč</p>
+</div>
+
+<div class="section">
+<h2>Zákazník</h2>
+<input id="name" placeholder="Jméno"><br>
+<input id="surname" placeholder="Příjmení"><br>
+<input id="email" placeholder="Email"><br>
+<input id="phone" placeholder="Telefon"><br><br>
+<button onclick="sendOrder()">Odeslat objednávku</button>
+</div>
+
+<script>
+let products = [];
+let cart = {};
+
+// načtení CSV ručně
+const input = document.getElementById("fileInput");
+
+input.addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    const text = event.target.result;
+    products = [];
+
+    const rows = text.trim().split("\n").slice(1);
+
+    rows.forEach(r => {
+      let clean = r.replace("\r", "");
+      let [nazev, cena] = clean.split(";");
+
+      products.push({ id: nazev, nazev: nazev, cena: parseInt(cena) });
+    });
+
+    renderProducts();
+  };
+
+  reader.readAsText(file);
+});
+
+function renderProducts(){
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+
+  products.forEach(p => {
+    let div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `<h3>${p.nazev}</h3>
+                     <p>${p.cena} Kč</p>
+                     <button onclick="add('${p.id}')">Přidat</button>`;
+
+    container.appendChild(div);
+  });
+}
+
+function add(id){
+  cart[id] = (cart[id] || 0) + 1;
+  update();
+}
+
+function update(){
+  let count = 0;
+  let price = 0;
+
+  products.forEach(p => {
+    let qty = cart[p.id] || 0;
+    count += qty;
+    price += qty * p.cena;
+  });
+
+  document.getElementById("count").innerText = count;
+  document.getElementById("price").innerText = price;
+}
+
+function sendOrder(){
+  let text = "Objednávka:\n";
+
+  products.forEach(p => {
+    if(cart[p.id]) text += p.nazev + ": " + cart[p.id] + " ks\n";
+  });
+
+  text += "\nCelkem kusů: " + count.innerText;
+  text += "\nCena: " + price.innerText + " Kč";
+
+  text += "\n\nZákazník: " + name.value + " " + surname.value;
+
+  location.href = "mailto:app@kostka-skola.cz?body=" + encodeURIComponent(text);
+}
+</script>
+
+</body>
+</html>
